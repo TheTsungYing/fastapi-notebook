@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, Query
+from typing import Optional
 
 from dependencies.auth import verify_user_session
 from database import get_db
@@ -27,10 +28,14 @@ async def create_note(note: NoteCreate, current_user_id: int=Depends(verify_user
     return {"message":"筆記建立成功"}
 
 @router.get("")
-async def get_notes(current_user_id: int=Depends(verify_user_session), db=Depends(get_db)):
+async def get_notes(title: Optional[str] = Query(None), current_user_id: int=Depends(verify_user_session), db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
-    sql = "SELECT id, title FROM notes WHERE user_id = %s"
-    val = (current_user_id,)
+    if title:
+        sql = "SELECT id, title FROM notes WHERE user_id = %s AND title LIKE %s"
+        val = (current_user_id, f"%{title}%")
+    else:
+        sql = "SELECT id, title FROM notes WHERE user_id = %s"
+        val = (current_user_id,)
     cursor.execute(sql, val)
     notes = cursor.fetchall()
     return notes
