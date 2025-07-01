@@ -25,7 +25,8 @@ async def create_note(note: NoteCreate, current_user_id: int=Depends(verify_user
     val = (current_user_id, note.title, note.content)
     cursor.execute(sql, val)
     db.commit()
-    return {"message":"筆記建立成功"}
+    note_id = cursor.lastrowid
+    return {"message":"筆記建立成功", "id": note_id}
 
 @router.get("")
 async def get_notes(title: Optional[str] = Query(None), current_user_id: int=Depends(verify_user_session), db=Depends(get_db)):
